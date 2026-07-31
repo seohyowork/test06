@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>기록하고, 실험하고, 엮습니다</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Nanum+Pen+Script&family=Noto+Sans+KR:wght@300;400;500;700&family=Noto+Serif+KR:wght@300;400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* 기본 초기화 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            color: #333333;
+            background-color: #ffffff;
+            overflow-x: hidden;
+        }
+
+        /* 패럴랙스 히어로 영역 */
+        .hero-section {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 40px 6%;
+            background-color: #f7f7f9;
+        }
+
+        /* 배경 레이어 (Layer-0 ~ Layer-5) */
+        .parallax-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            will-change: transform;
+            pointer-events: none;
+        }
+
+        .layer-5 { background-image: url('back-img/back_0005_Layer-5.png'); z-index: 1; }
+        .layer-4 { background-image: url('back-img/back_0004_Layer-4.png'); z-index: 2; }
+        .layer-3 { background-image: url('back-img/back_0003_Layer-3.png'); z-index: 3; }
+        .layer-2 { background-image: url('back-img/back_0002_Layer-2.png'); z-index: 4; }
+        .layer-1 { background-image: url('back-img/back_0001_Layer-1.png'); z-index: 5; }
+        .layer-0 { background-image: url('back-img/back_0000_Layer-0.png'); z-index: 6; }
+
+        /* 상단 헤더 */
+        header {
+            position: relative;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+
+        .header-slogan {
+            font-size: 14px;
+            font-weight: 500;
+            letter-spacing: -0.5px;
+            color: #2b2b2b;
+        }
+
+        nav .nav-list {
+            display: flex;
+            list-style: none;
+            gap: 40px;
+        }
+
+        nav .nav-list a {
+            text-decoration: none;
+            color: #4a4a4a;
+            font-size: 15px;
+            font-weight: 400;
+            transition: color 0.3s ease;
+        }
+
+        nav .nav-list a:hover,
+        nav .nav-list .active a {
+            color: #5154aa;
+            font-weight: 500;
+        }
+
+        /* 메인 텍스트 컨테이너 */
+        .main-content {
+            position: relative;
+            z-index: 90;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            flex-grow: 1;
+            max-width: 650px;
+            margin-top: 30px;
+            margin-bottom: 20px;
+        }
+
+        .sub-handwriting {
+            font-family: 'Nanum Pen Script', cursive;
+            font-size: 34px;
+            color: #5b62d3;
+            margin-bottom: 15px;
+            letter-spacing: 1px;
+            transform: rotate(-1deg);
+        }
+
+        /* [💡 핵심 가공 단락: WebGL 메쉬 인터랙션 캔버스 배치] */
+        .mesh-title-container {
+            width: 100%;
+            height: 380px; /* 타이틀 3줄이 충분히 담기는 고정 높이 확보 */
+            margin-bottom: 20px;
+            position: relative;
+            cursor: pointer;
+        }
+        .mesh-title-container canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .description {
+            font-size: 16px;
+            line-height: 1.7;
+            color: #555555;
+            font-weight: 300;
+            margin-bottom: 30px;
+            letter-spacing: -0.5px;
+            word-break: keep-all;
+        }
+
+        .cta-button {
+            display: inline-flex;
+            align-items: center;
+            text-decoration: none;
+            color: #444444;
+            font-size: 14px;
+            font-weight: 400;
+            letter-spacing: -0.5px;
+            position: relative;
+            padding-bottom: 8px;
+            width: fit-content;
+            transition: color 0.3s ease;
+        }
+
+        .cta-button::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 120px;
+            height: 1px;
+            background-color: #888888;
+            transition: width 0.3s ease;
+        }
+
+        .cta-button::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 120px;
+            width: 15px;
+            height: 1px;
+            background-color: #888888;
+            transform: rotate(-30deg);
+            transform-origin: left bottom;
+        }
+
+        /* 상세 정보 전체 컨테이너 */
+        .detailed-content {
+            position: relative;
+            z-index: 20;
+            background-color: #ffffff;
+            width: 100%;
+            box-shadow: 0 -20px 40px rgba(0,0,0,0.05);
+        }
+
+        /* 1. 세 개의 요약 카드 영역 (01, 02, 03) */
+        .summary-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5%;
+            padding: 80px 8% 60px 8%;
+            background-color: #ffffff;
+        }
+
+        .summary-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .summary-img-frame {
+            width: 100%;
+            height: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .summary-img-frame img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .card-num {
+            font-family: 'Noto Serif KR', serif;
+            font-size: 14px;
+            color: #5154aa;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .card-title {
+            font-family: 'Noto Serif KR', serif;
+            font-size: 24px;
+            font-weight: 700;
+            color: #2b2b2b;
+            margin-bottom: 14px;
+            letter-spacing: -0.5px;
+        }
+
+        .card-desc {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #666666;
+            font-weight: 300;
+            word-break: keep-all;
+            max-width: 250px;
+        }
+
+        /* 2. '내가 믿는 디자인' 배너 영역 (back-myway.png 배경) */
+        .myway-section {
+            position: relative;
+            background-image: url('back-myway.png');
+            background-size: 100% auto;
+            background-position: center top;
+            background-repeat: no-repeat;
+            background-color: #f7f6fb;
+            padding: 70px 8%;
+            display: grid;
+            grid-template-columns: 1.1fr 1.9fr;
+            gap: 6%;
+            color: #333333;
+        }
+
+        .myway-left {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+
+        .myway-tag {
+            font-family: 'Nanum Pen Script', cursive;
+            font-size: 22px;
+            color: #5b62d3;
+            margin-bottom: 15px;
+        }
+
+        .myway-title {
+            font-family: 'Noto Serif KR', serif;
+            font-size: 30px;
+            font-weight: 700;
+            line-height: 1.4;
+            color: #1a1a1a;
+            margin-bottom: 25px;
+            letter-spacing: -1px;
+            word-break: keep-all;
+        }
+
+        .myway-desc {
+            font-size: 14.5px;
+            line-height: 1.7;
+            color: #555555;
+            font-weight: 300;
+            word-break: keep-all;
+        }
+
+        .myway-right-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px 35px;
+        }
+
+        .grid-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+        }
+
+        .item-icon {
+            font-size: 22px;
+            color: #5b62d3;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .item-text-box {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .item-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #2b2b2b;
+            margin-bottom: 8px;
+            letter-spacing: -0.3px;
+        }
+
+        .item-desc {
+            font-size: 13.5px;
+            line-height: 1.55;
+            color: #666666;
+            font-weight: 300;
+            word-break: keep-all;
+        }
+
+        /* 3. 작업 미리보기 섹션 (d.png, e.png, f.png) */
+        .work-preview-section {
+            position: relative;
+            background-color: #fcfcfd;
+            padding: 70px 8%;
+            border-top: 1px solid #f0f0f4;
+        }
+
+        .work-header-box {
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 35px;
+            width: 100%;
+        }
+
+        .work-tag {
+            font-family: 'Nanum Pen Script', cursive;
+            font-size: 22px;
+            color: #5b62d3;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .work-section-title {
+            font-family: 'Noto Serif KR', serif;
+            font-size: 28px;
+            font-weight: 700;
+            color: #222222;
+            letter-spacing: -0.8px;
+        }
+
+        .project-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 25px;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .project-card {
+            background-color: #ffffff;
+            border: 1px solid #eef0f2;
+            border-radius: 4px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+            position: relative;
+        }
+
+        .project-card:nth-child(3) {
+            z-index: 10;
+            overflow: visible; 
+        }
+
+        .project-img-container {
+            width: 100%;
+            height: 200px;
+            background-color: #f7f7f9;
+            position: relative;
+        }
+
+        .project-img-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* 180px 회전 배지 포지션 수식 */
+        .circle-badge-container {
+            position: absolute;
+            top: -90px; 
+            right: -90px;
+            width: 180px;  
+            height: 180px; 
+            z-index: 50; 
+            pointer-events: none; 
+            animation: rotateBadge 28s linear infinite; 
+        }
+        @keyframes rotateBadge { 100% { transform: rotate(360deg); } }
+
+        .svg-text-word {
+            font-family: 'Fira Code', monospace;
+            font-size: 8.5px;
+            font-weight: 700;
+            fill: #555555; 
+            letter-spacing: 0.2px;
+        }
+        .svg-text-dot {
+            font-size: 5.5px;
+            fill: #555555; 
+        }
+
+        .project-body {
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            flex-grow: 1;
+            min-height: 160px;
+            z-index: 5;
+            background-color: #ffffff;
+        }
+
+        .project-title {
+            font-family: 'Noto Sans KR', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            color: #2b2b2b;
+            margin-bottom: 10px;
+        }
+
+        .project-desc {
+            font-size: 13px;
+            line-height: 1.55;
+            color: #666666;
+            font-weight: 300;
+            word-break: keep-all;
+            margin-bottom: 20px;
+        }
+
+        .project-link {
+            text-decoration: none;
+            color: #444444;
+            font-size: 12px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            align-self: flex-end;
+            transition: color 0.2s ease;
+        }
+
+        .project-link:hover {
+            color: #5154aa;
+        }
+
+        /* 4. 하단 최종 비전 슬로건 배너 클로징 영역 (back-foot.png 배경) */
+        .vision-banner-section {
+            background-image: url('back-foot.png');
+            background-size: 100% auto;
+            background-position: center top;
+            background-repeat: no-repeat;
+            background-color: #f4f2f7;
+            padding: 80px 6%;
+            text-align: center;
+            border-top: 1px solid #eaeaf0;
+            position: relative;
+        }
+
+        .vision-main-title {
+            font-family: 'Noto Serif KR', serif;
+            font-size: 30px;
+            font-weight: 400;
+            line-height: 1.5;
+            color: #222222;
+            margin-bottom: 30px;
+            letter-spacing: -0.5px;
+            word-break: keep-all;
+        }
+
+        .vision-sub-txt {
+            font-size: 14px;
+            color: #666666;
+            font-weight: 300;
+            margin-bottom: 20px;
+            letter-spacing: -0.2px;
+        }
+
+        .vision-highlight-hand {
+            font-family: 'Nanum Pen Script', cursive;
+            font-size: 28px;
+            color: #5b62d3;
+            letter-spacing: 0.5px;
+        }
+
+        /* 반응형 제어 */
+        @media (max-width: 1024px) {
+            .myway-section { grid-template-columns: 1fr; gap: 40px; background-size: cover; }
+            .project-grid { grid-template-columns: 1fr; gap: 30px; }
+            .vision-banner-section { background-size: cover; }
+            .circle-badge-container { display: none; }
+        }
+
+        @media (max-width: 768px) {
+            .hero-section { padding: 30px 20px; }
+            header { flex-direction: column; align-items: flex-start; gap: 20px; }
+            nav .nav-list { gap: 20px; }
+            .parallax-layer { background-position: 75% center; }
+            .mesh-title-container { height: 260px; } /* 모바일 타이틀 높이 보정 */
+            
+            .summary-row { grid-template-columns: 1fr; gap: 40px; padding: 50px 6%; }
+            .summary-img-frame { height: 130px; }
+            .myway-right-grid { grid-template-columns: 1fr; }
+            
+            .work-preview-section { padding: 50px 6%; }
+            .work-section-title { font-size: 24px; }
+            .vision-main-title { font-size: 22px; line-height: 1.4; }
+            .vision-highlight-hand { font-size: 24px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="hero-section" id="heroSection">
+        <div class="parallax-layer layer-5" id="layer5"></div>
+        <div class="parallax-layer layer-4" id="layer4"></div>
+        <div class="parallax-layer layer-3" id="layer3"></div>
+        <div class="parallax-layer layer-2" id="layer2"></div>
+        <div class="parallax-layer layer-1" id="layer1"></div>
+        <div class="parallax-layer layer-0" id="layer0"></div>
+
+        <header>
+            <div class="header-slogan">기록하고, 실험하고, 엮습니다</div>
+            <nav>
+                <ul class="nav-list">
+                    <li class="active"><a href="#about">소개</a></li>
+                    <li><a href="#work">작업</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        <main class="main-content" id="mainText">
+            <div class="sub-handwriting">기록하는, 실험적인, 스토리텔러</div>
+            
+            <div class="mesh-title-container" id="meshTitleWrapper">
+                <canvas id="meshCanvas"></canvas>
+            </div>
+            
+            <p class="description">
+                기록에서 시작해서 다양한 것들을<br>실험적으로 콜라주하고 스토리로 엮어냅니다.
+            </p>
+            <a href="#detailedContent" class="cta-button">더 알아보기</a>
+        </main>
+    </div>
+
+    <div class="detailed-content" id="detailedContent">
+        
+        <section class="summary-row">
+            <div class="summary-card">
+                <div class="summary-img-frame"><img src="a.png" alt="기록하는"></div>
+                <span class="card-num">01</span>
+                <h3 class="card-title">기록하는</h3>
+                <p class="card-desc">관찰하고 수집하며 사소한 순간도 놓치지 않고 기록합니다.</p>
+            </div>
+
+            <div class="summary-card">
+                <div class="summary-img-frame"><img src="b.png" alt="실험적인"></div>
+                <span class="card-num">02</span>
+                <h3 class="card-title">실험적인</h3>
+                <p class="card-desc">다양한 재료와 형식으로 낯선 조합을 시도하고 새로운 시각을 만듭니다.</p>
+            </div>
+
+            <div class="summary-card">
+                <div class="summary-img-frame"><img src="c.png" alt="스토리텔러"></div>
+                <span class="card-num">03</span>
+                <h3 class="card-title">스토리텔러</h3>
+                <p class="card-desc">흩어진 조각들을 엮어 의미 있는 이야기로 연결합니다.</p>
+            </div>
+        </section>
+
+        <section class="myway-section">
+            <div class="myway-left">
+                <span class="myway-tag">내가 믿는 디자인</span>
+                <h2 class="myway-title">디자인은 세상을 바라보는<br>나의 방식입니다.</h2>
+                <p class="myway-desc">
+                    호기심으로 관찰하고, 영감을 찾고, 콜라주로 연결하고, 이야기로 전합니다. 서로 다른 것을 이어 새로운 맥락을 만듭니다.
+                </p>
+            </div>
+
+            <div class="myway-right-grid">
+                <div class="grid-item">
+                    <div class="item-icon">🔍</div>
+                    <div class="item-text-box">
+                        <h4 class="item-title">관찰과 질문</h4>
+                        <p class="item-desc">일상의 틈에서 의미를 발견하고 질문을 만듭니다.</p>
+                    </div>
+                </div>
+
+                <div class="grid-item">
+                    <div class="item-icon">📂</div>
+                    <div class="item-text-box">
+                        <h4 class="item-title">아카이브와 메모</h4>
+                        <p class="item-desc">기록하는 습관으로 영감의 지도를 만듭니다.</p>
+                    </div>
+                </div>
+
+                <div class="grid-item">
+                    <div class="item-icon">🧩</div>
+                    <div class="item-text-box">
+                        <h4 class="item-title">콜라주와 연결</h4>
+                        <p class="item-desc">텍스트, 이미지, 재료를 조합해 관계를 형성합니다.</p>
+                    </div>
+                </div>
+
+                <div class="grid-item">
+                    <div class="item-icon">💬</div>
+                    <div class="item-text-box">
+                        <h4 class="item-title">이야기와 맥락</h4>
+                        <p class="item-desc">정보를 맥락 속에 배치해 구조로 엮어냅니다.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="work-preview-section" id="work">
+            <div class="work-header-box">
+                <div>
+                    <span class="work-tag">작업 미리보기</span>
+                    <h2 class="work-section-title">기록의 재료로 빚어낸 이야기들</h2>
+                </div>
+            </div>
+
+            <div class="project-grid">
+                <div class="project-card">
+                    <div class="project-img-container"><img src="d.png" alt="기록의 조각"></div>
+                    <div class="project-body">
+                        <h4 class="project-title">기록의 조각</h4>
+                        <p class="project-desc">사라지기 쉬운 순간들을 모아 시각적 아카이브로 정리한 프로젝트</p>
+                        <a href="#v1" class="project-link">자세히 보기 &rarr;</a>
+                    </div>
+                </div>
+
+                <div class="project-card">
+                    <div class="project-img-container"><img src="e.png" alt="실험의 레이어"></div>
+                    <div class="project-body">
+                        <h4 class="project-title">실험의 레이어</h4>
+                        <p class="project-desc">재료와 형식을 실험하여 새로운 시각 언어를 탐구한 프로젝트</p>
+                        <a href="#v2" class="project-link">자세히 보기 &rarr;</a>
+                    </div>
+                </div>
+                
+                <div class="project-card">
+                    <div class="project-img-container">
+                        <img src="f.png" alt="이야기의 구조">
+                        <div class="circle-badge-container">
+                            <svg viewBox="0 0 100 100" width="100%" height="100%">
+                                <defs>
+                                    <path id="textCirclePath" d="M 50,50 m -37.8,0 a 37.5,37.5 0 1,1 75.6,0 a 37.5,37.5 0 1,1 -75.6,0" />
+                                </defs>
+                                <text font-family="monospace">
+                                    <textPath href="#textCirclePath" startOffset="0%">
+                                        <tspan class="svg-text-word">collect</tspan>
+                                        <tspan class="svg-text-dot">&nbsp;• • •&nbsp;</tspan>
+                                        <tspan class="svg-text-word">connect</tspan>
+                                        <tspan class="svg-text-dot">&nbsp;• • •&nbsp;</tspan>
+                                        <tspan class="svg-text-word">create</tspan>
+                                        <tspan class="svg-text-dot">&nbsp;• • •</tspan>
+                                    </textPath>
+                                </text>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="project-body">
+                        <h4 class="project-title">이야기의 구조</h4>
+                        <p class="project-desc">복잡한 정보를 구조화하여 설득력 있는 이야기로 전환한 프로젝트</p>
+                        <a href="#v3" class="project-link">자세히 보기 &rarr;</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="vision-banner-section">
+            <h2 class="vision-main-title">
+                더 많은 기록을 통해, 더 넓은 세상을 연결하는<br>
+                디자이너가 되겠습니다.
+            </h2>
+            <p class="vision-sub-txt">기록은 나의 출발점, 실험은 나의 과정, 이야기는 나의 목적지.</p>
+            <div class="vision-highlight-hand">계속 쓰고, 붙이고, 엮으며 나만의 세계를 확장해 나갑니다.</div>
+        </section>
+
+    </div>
+
+    <script>
+        // 상선 물리 물리 상수 연동
+        const GRID_W = 96;
+        const GRID_H = 40;
+        const DRAG = 1.8;
+        const SPRING_K = 0.08;
+        const DAMPING = 0.9;
+        const DT = 0.1;
+        const CHROMA = 0.005;
+
+        // 쉐이더 소스 연동
+        const VERT_SRC = `#version 300 es
+        in vec2 aPos;
+        in vec2 aUv;
+        in vec2 aDisp;
+        out vec2 vUv;
+        out float vMag;
+        void main() {
+            gl_Position = vec4(aPos + aDisp, 0.0, 1.0);
+            vUv = aUv;
+            vMag = length(aDisp);
+        }`;
+
+        const FRAG_SRC = `#version 300 es
+        precision highp float;
+        in vec2 vUv;
+        in float vMag;
+        out vec4 outColor;
+        uniform sampler2D uTex;
+        uniform float uChroma;
+        uniform vec3 uColorA;
+        uniform vec3 uColorB;
+        void main() {
+            vec4 base = texture(uTex, vUv);
+            if (uChroma > 0.0) {
+                float o = uChroma * ${CHROMA.toFixed(5)} * clamp(vMag * 8.0, 0.0, 1.0);
+                float aOff = texture(uTex, vUv + vec2(o, 0.0)).a;
+                float bOff = texture(uTex, vUv - vec2(o, 0.0)).a;
+                vec3 col = base.rgb * base.a;
+                col += uColorA * max(0.0, aOff - base.a);
+                col += uColorB * max(0.0, bOff - base.a);
+                float aMax = max(base.a, max(aOff, bOff));
+                outColor = vec4(col, aMax);
+            } else {
+                outColor = base;
+            }
+        }`;
+
+        function compile(gl, type, src) {
+            const sh = gl.createShader(type);
+            gl.shaderSource(sh, src);
+            gl.compileShader(sh);
+            if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
+                console.error("Shader compile error:", gl.getShaderInfoLog(sh));
+                gl.deleteShader(sh);
+                return null;
+            }
+            return sh;
+        }
+
+        function linkProgram(gl, vs, fs) {
+            const p = gl.createProgram();
+            gl.attachShader(p, vs);
+            gl.attachShader(p, fs);
+            gl.linkProgram(p);
+            if (!gl.getProgramParameter(p, gl.LINK_STATUS)) {
+                console.error("Program link error:", gl.getProgramInfoLog(p));
+                gl.deleteProgram(p);
+                return null;
+            }
+            return p;
+        }
+
+        // 텍스트 렌더링 캔버스 유틸 (3줄 줄바꿈 구현)
+        function renderTextToCanvas(lines, color, fontSize, width, height) {
+            const c = document.createElement("canvas");
+            c.width = width;
+            c.height = height;
+            const ctx = c.getContext("2d");
+            ctx.clearRect(0, 0, width, height);
+            ctx.fillStyle = color;
+            ctx.textAlign = "left"; // 디자이너 고유 좌측 정렬 매칭
+            ctx.textBaseline = "middle";
+            ctx.font = `700 ${fontSize}px 'Noto Serif KR', serif`;
+            
+            // 3줄 줄바꿈 배치 연산
+            const lineHeight = fontSize * 1.2;
+            const totalHeight = lineHeight * lines.length;
+            let startY = (height - totalHeight) / 2 + lineHeight / 2;
+            
+            lines.forEach((line) => {
+                ctx.fillText(line, 0, startY);
+                startY += lineHeight;
+            });
+            return c;
+        }
+
+        // 메인 WebGL 구동 엔진
+        function initMeshText() {
+            const wrapper = document.getElementById("meshTitleWrapper");
+            const canvas = document.getElementById("meshCanvas");
+            if (!canvas || !wrapper) return;
+
+            const gl = canvas.getContext("webgl2", {
+                alpha: true,
+                premultipliedAlpha: true,
+                antialias: true,
+            });
+            if (!gl) return;
+
+            const vertCount = (GRID_W + 1) * (GRID_H + 1);
+            const positions = new Float32Array(vertCount * 2);
+            const uvs = new Float32Array(vertCount * 2);
+            
+            for (let y = 0; y <= GRID_H; y++) {
+                for (let x = 0; x <= GRID_W; x++) {
+                    const i = y * (GRID_W + 1) + x;
+                    const u = x / GRID_W;
+                    const v = y / GRID_H;
+                    positions[i * 2] = u * 2 - 1;
+                    positions[i * 2 + 1] = 1 - v * 2;
+                    uvs[i * 2] = u;
+                    uvs[i * 2 + 1] = v;
+                }
+            }
+
+            const indexCount = GRID_W * GRID_H * 6;
+            const indices = new Uint32Array(indexCount);
+            let idx = 0;
+            for (let y = 0; y < GRID_H; y++) {
+                for (let x = 0; x < GRID_W; x++) {
+                    const a = y * (GRID_W + 1) + x;
+                    const b = a + 1;
+                    const c = a + (GRID_W + 1);
+                    const d = c + 1;
+                    indices[idx++] = a;
+                    indices[idx++] = c;
+                    indices[idx++] = b;
+                    indices[idx++] = b;
+                    indices[idx++] = c;
+                    indices[idx++] = d;
+                }
+            }
+
+            const disp = new Float32Array(vertCount * 2);
+            const vel = new Float32Array(vertCount * 2);
+
+            const vs = compile(gl, gl.VERTEX_SHADER, VERT_SRC);
+            const fs = compile(gl, gl.FRAGMENT_SHADER, FRAG_SRC);
+            if (!vs || !fs) return;
+            const program = linkProgram(gl, vs, fs);
+            if (!program) return;
+
+            const aPos = gl.getAttribLocation(program, "aPos");
+            const aUv = gl.getAttribLocation(program, "aUv");
+            const aDisp = gl.getAttribLocation(program, "aDisp");
+            const uTex = gl.getUniformLocation(program, "uTex");
+            const uChroma = gl.getUniformLocation(program, "uChroma");
+            const uColorA = gl.getUniformLocation(program, "uColorA");
+            const uColorB = gl.getUniformLocation(program, "uColorB");
+
+            const vao = gl.createVertexArray();
+            gl.bindVertexArray(vao);
+
+            const posBuf = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, posBuf);
+            gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
+            gl.enableVertexAttribArray(aPos);
+            gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+
+            const uvBuf = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, uvBuf);
+            gl.bufferData(gl.ARRAY_BUFFER, uvs, gl.STATIC_DRAW);
+            gl.enableVertexAttribArray(aUv);
+            gl.vertexAttribPointer(aUv, 2, gl.FLOAT, false, 0, 0);
+
+            const dispBuf = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, dispBuf);
+            gl.bufferData(gl.ARRAY_BUFFER, disp, gl.DYNAMIC_DRAW);
+            gl.enableVertexAttribArray(aDisp);
+            gl.vertexAttribPointer(aDisp, 2, gl.FLOAT, false, 0, 0);
+
+            const idxBuf = gl.createBuffer();
+            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, idxBuf);
+            gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
+
+            const tex = gl.createTexture();
+            gl.bindTexture(gl.TEXTURE_2D, tex);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+
+            const textLines = ["쓰고,", "붙이고,", "엮는 사람"];
+            const textColor = "#1a1a1a"; // 기존 디자인 톤 컬러 계승
+
+            const rebuildTex = () => {
+                const w = Math.max(2, canvas.width);
+                const h = Math.max(2, canvas.height);
+                const dpr = window.devicePixelRatio || 1;
+                // 모바일 해상도 및 데스크톱 스케일링 대응 매칭 (기존 74px 스케일)
+                const responsiveFontSize = window.innerWidth < 768 ? 48 : 74;
+                const realSize = responsiveFontSize * dpr;
+
+                const c2 = renderTextToCanvas(textLines, textColor, realSize, w, h);
+                gl.bindTexture(gl.TEXTURE_2D, tex);
+                gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, c2);
+            };
+
+            const resize = () => {
+                const dpr = window.devicePixelRatio || 1;
+                const rect = wrapper.getBoundingClientRect();
+                const w = Math.max(2, Math.round(rect.width * dpr));
+                const h = Math.max(2, Math.round(rect.height * dpr));
+                if (canvas.width !== w || canvas.height !== h) {
+                    canvas.width = w;
+                    canvas.height = h;
+                    gl.viewport(0, 0, w, h);
+                    rebuildTex();
+                }
+            };
+
+            window.addEventListener("resize", resize);
+            resize();
+
+            const cursor = { x: 99, y: 99, px: 99, py: 99, vx: 0, vy: 0, inside: false };
+            
+            wrapper.addEventListener("pointermove", (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const nx = (e.clientX - rect.left) / rect.width;
+                const ny = (e.clientY - rect.top) / rect.height;
+                const x = nx * 2 - 1;
+                const y = 1 - ny * 2;
+                if (!cursor.inside) {
+                    cursor.px = x;
+                    cursor.py = y;
+                    cursor.inside = true;
+                }
+                cursor.x = x;
+                cursor.y = y;
+            });
+
+            wrapper.addEventListener("pointerleave", () => {
+                cursor.inside = false;
+                cursor.x = 99; cursor.y = 99;
+                cursor.vx = 0; cursor.vy = 0;
+            });
+
+            const splitColors = [[1, 0.25, 0.75], [0.25, 1, 0.5]]; // 핑크 + 그린 고유 크로마 스플릿 매칭
+
+            function tick() {
+                cursor.vx = cursor.x - cursor.px;
+                cursor.vy = cursor.y - cursor.py;
+                if (Math.hypot(cursor.vx, cursor.vy) > 0.3) {
+                    cursor.vx = 0; cursor.vy = 0;
+                }
+                cursor.px = cursor.x;
+                cursor.py = cursor.y;
+
+                for (let i = 0; i < vertCount; i++) {
+                    const i2 = i * 2;
+                    const px = positions[i2];
+                    const py = positions[i2 + 1];
+                    const dx = disp[i2];
+                    const dy = disp[i2 + 1];
+
+                    const cx = cursor.x - (px + dx);
+                    const cy = cursor.y - (py + dy);
+                    const cd = Math.hypot(cx, cy);
+                    const proximity = Math.max(0, 1 / (1 + cd / 0.05) - 0.1);
+
+                    let vx = vel[i2];
+                    let vy = vel[i2 + 1];
+
+                    vx += cursor.vx * DRAG * proximity;
+                    vy += cursor.vy * DRAG * proximity;
+
+                    vx -= dx * SPRING_K;
+                    vy -= dy * SPRING_K;
+
+                    vx *= DAMPING;
+                    vy *= DAMPING;
+
+                    vel[i2] = vx;
+                    vel[i2 + 1] = vy;
+
+                    let ndx = dx + vx * DT;
+                    let ndy = dy + vy * DT;
+                    disp[i2] = Math.max(-1, Math.min(1, ndx));
+                    disp[i2 + 1] = Math.max(-1, Math.min(1, ndy));
+                }
+
+                gl.bindBuffer(gl.ARRAY_BUFFER, dispBuf);
+                gl.bufferSubData(gl.ARRAY_BUFFER, 0, disp);
+
+                gl.clearColor(0, 0, 0, 0);
+                gl.clear(gl.COLOR_BUFFER_BIT);
+
+                gl.useProgram(program);
+                gl.activeTexture(gl.TEXTURE0);
+                gl.bindTexture(gl.TEXTURE_2D, tex);
+                gl.uniform1i(uTex, 0);
+                gl.uniform1f(uChroma, 1.0); // 크로마 분할 효과 상시 켜짐 세팅
+
+                const cycleMs = 400;
+                const cIdx = Math.floor(performance.now() / cycleMs) % splitColors.length;
+                const cA = splitColors[cIdx];
+                const cB = splitColors[(cIdx + 1) % splitColors.length];
+                
+                gl.uniform3f(uColorA, cA[0], cA[1], cA[2]);
+                gl.uniform3f(uColorB, cB[0], cB[1], cB[2]);
+
+                gl.enable(gl.BLEND);
+                gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+
+                gl.bindVertexArray(vao);
+                gl.drawElements(gl.TRIANGLES, indexCount, gl.UNSIGNED_INT, 0);
+
+                requestAnimationFrame(tick);
+            }
+            requestAnimationFrame(tick);
+        }
+
+        window.addEventListener("DOMContentLoaded", initMeshText);
+    </script>
+
+    <script>
+        const layer0 = document.getElementById('layer0');
+        const layer1 = document.getElementById('layer1');
+        const layer2 = document.getElementById('layer2');
+        const layer3 = document.getElementById('layer3');
+        const layer4 = document.getElementById('layer4');
+        const layer5 = document.getElementById('layer5');
+
+        window.addEventListener('scroll', () => {
+            const scrollTop = window.scrollY;
+            const viewportHeight = window.innerHeight;
+
+            let progress = scrollTop / viewportHeight;
+            if (progress < 0) progress = 0;
+            if (progress > 1) progress = 1;
+
+            const x0 = progress * 60;   
+            const x1 = progress * 130;  
+            const x2 = progress * -50;  
+            const x3 = progress * -100; 
+            const x4 = progress * 40;   
+
+            layer0.style.transform = `translate3d(${x0}px, 0, 0)`;
+            layer1.style.transform = `translate3d(${x1}px, 0, 0) scale(${1 + progress * 0.05})`;
+            layer2.style.transform = `translate3d(${x2}px, 0, 0)`;
+            layer3.style.transform = `translate3d(${x3}px, 0, 0)`; 
+            layer4.style.transform = `translate3d(${x4}px, 0, 0)`;
+            layer5.style.transform = 'translate3d(0, 0, 0)'; 
+        });
+    </script>
+</body>
+</html>
